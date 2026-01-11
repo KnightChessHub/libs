@@ -12,7 +12,7 @@ const Board=()=>{
                     {
                         Array.from({length: 8}).map((_,index)=>(
                             <div className="border flex items-center justify-center">
-                                {index}
+                                {7-index}
                             </div>
                         ))
                     }
@@ -46,7 +46,7 @@ const Board=()=>{
                     {
                         Array.from({length: 8}).map((_,index)=>(
                             <div className="border flex items-center justify-center">
-                                {index}
+                                {7-index}
                             </div>
                         ))
                     }
