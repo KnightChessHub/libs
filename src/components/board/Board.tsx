@@ -5,11 +5,11 @@ const Board=()=>{
         <div className="w-full border aspect-square grid grid-rows-8">
             {
                 Array.from({length: 8}).map((_, row)=>(
-                    <div className="w-full grid grid-cols-8 border">
+                    <div key={row} className="w-full grid grid-cols-8">
                         {
                             Array.from({length: 8}).map((_, col)=>{
                                     const index = 8* row + col
-                                    return <Square index={index}/>
+                                    return <Square key={index} index={index}/>
                                 }
                             )
                         }
