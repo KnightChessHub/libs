@@ -138,6 +138,17 @@ export const nextPossibleMoves=(index: number, key: string)=>{
             }
             return ret
 
+        case "WN":
+            var ret =[]
+            var p1 = index + 16 + 1;
+            var p2 = index + 16 - 1;
+            var p3 = index + 8 + 2;
+            var p4 = index + 8 - 2;
+            var p5 = index - 16 +1;
+            var p6 = index - 16 -1;
+            var p7 = index - 8 + 2;
+            var p8 = index - 8 - 2;
+
         default:
             return []
     }
