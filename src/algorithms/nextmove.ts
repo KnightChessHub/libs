@@ -8,6 +8,14 @@ export const nextPossibleMoves=(index: number, key: string)=>{
             else
                 return [index - 8, index - 16]
 
+        case "BP":
+            if (index + 8 >63)
+                return []
+            else if (index + 16 >63)
+                return [index+8]
+            else
+                return [index + 8, index + 16]
+
         default:
             return []
     }

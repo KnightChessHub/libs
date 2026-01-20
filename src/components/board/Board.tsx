@@ -16,7 +16,7 @@ const Board=()=>{
                         <div className="w-6 grid grid-rows-8" style={{ height: `calc(100% - ${isRight ? 48 : 24}px)` }}>
                             {
                                 Array.from({length: 8}).map((_,index)=>(
-                                    <div className="border flex items-center justify-center">
+                                    <div className="border flex items-center justify-center text-xs">
                                         {7-index}
                                     </div>
                                 ))
@@ -32,7 +32,7 @@ const Board=()=>{
                         <div className="w-full h-6 grid grid-cols-8">
                             {
                                 Array.from({length: 8}).map((_,index)=>(
-                                    <div className="border flex items-center justify-center">
+                                    <div className="border flex items-center justify-center text-xs">
                                         {files[`${index}`]}
                                     </div>
                                 ))
@@ -46,7 +46,7 @@ const Board=()=>{
                         <div className="w-full h-6 grid grid-cols-8">
                             {
                                 Array.from({length: 8}).map((_,index)=>(
-                                    <div className="border flex items-center justify-center">
+                                    <div className="border flex items-center justify-center text-xs">
                                         {files[`${index}`]}
                                     </div>
                                 ))
@@ -62,7 +62,7 @@ const Board=()=>{
                         <div className="w-6 grid grid-rows-8" style={{ height: `calc(100% - ${isLeft ? 48 : 24}px)` }}>
                             {
                                 Array.from({length: 8}).map((_,index)=>(
-                                    <div className="border flex items-center justify-center">
+                                    <div className="border flex items-center justify-center text-xs">
                                         {7-index}
                                     </div>
                                 ))
