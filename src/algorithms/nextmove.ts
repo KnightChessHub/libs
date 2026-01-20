@@ -110,6 +110,34 @@ export const nextPossibleMoves=(index: number, key: string)=>{
             }
             return ret;
 
+        case "WR":
+            var ret =[]
+
+            var x = index%8;
+            var y = (index -x)/8
+
+            for(var i=0;i<8;i++){
+                if((8*i + x) != index)
+                    ret.push(8*i + x);
+                if((8*y + i) != index)
+                    ret.push(8*y + i);        
+            }
+            return ret
+
+        case "BR":
+            var ret =[]
+
+            var x = index%8;
+            var y = (index -x)/8
+
+            for(var i=0;i<8;i++){
+                if((8*i + x) != index)
+                    ret.push(8*i + x);
+                if((8*y + i) != index)
+                    ret.push(8*y + i);        
+            }
+            return ret
+
         default:
             return []
     }
