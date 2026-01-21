@@ -149,6 +149,48 @@ export const nextPossibleMoves=(index: number, key: string)=>{
             var p7 = index - 8 + 2;
             var p8 = index - 8 - 2;
 
+        case "WK":
+            var ret = []
+            if(((index+9)-((index+9)%8))/8 == ((index+8)-((index+8)%8))/8 && (index+9<=63))
+                ret.push(index+9)
+            if(((index+7)-((index+7)%8))/8 == ((index+8)-((index+8)%8))/8 && (index+7<=63))
+                ret.push(index+7)
+            if(index+8<=63)
+                ret.push(index+8) 
+            if(((index+1)-((index+1)%8))/8 == ((index)-((index)%8))/8 && (index+1<=63))
+                ret.push(index+1)
+            if(((index-1)-((index-1)%8))/8 == ((index)-((index)%8))/8 && (index-1<=63))
+                ret.push(index-1)
+            if(((index-9)-((index-9)%8))/8 == ((index-8)-((index-8)%8))/8 && (index-9>=0))
+                ret.push(index-9)
+            if(((index-7)-((index-7)%8))/8 == ((index-8)-((index-8)%8))/8 && (index-7>=0))
+                ret.push(index-7)
+            if(index-8>=0)
+                ret.push(index-8)
+
+            return ret;
+
+        case "BK":
+            var ret = []
+            if(((index+9)-((index+9)%8))/8 == ((index+8)-((index+8)%8))/8 && (index+9<=63))
+                ret.push(index+9)
+            if(((index+7)-((index+7)%8))/8 == ((index+8)-((index+8)%8))/8 && (index+7<=63))
+                ret.push(index+7)
+            if(index+8<=63)
+                ret.push(index+8) 
+            if(((index+1)-((index+1)%8))/8 == ((index)-((index)%8))/8 && (index+1<=63))
+                ret.push(index+1)
+            if(((index-1)-((index-1)%8))/8 == ((index)-((index)%8))/8 && (index-1<=63))
+                ret.push(index-1)
+            if(((index-9)-((index-9)%8))/8 == ((index-8)-((index-8)%8))/8 && (index-9>=0))
+                ret.push(index-9)
+            if(((index-7)-((index-7)%8))/8 == ((index-8)-((index-8)%8))/8 && (index-7>=0))
+                ret.push(index-7)
+            if(index-8>=0)
+                ret.push(index-8)
+
+            return ret;
+
         default:
             return []
     }
