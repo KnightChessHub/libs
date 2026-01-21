@@ -149,6 +149,93 @@ export const nextPossibleMoves=(index: number, key: string)=>{
             var p7 = index - 8 + 2;
             var p8 = index - 8 - 2;
 
+            var rank = (index - index%8)/8;
+            var rem = index%8;
+
+            if(rank>=2){
+                if(rem>=1){
+                    ret.push(p6);
+                }
+                if(rem<=6){
+                    ret.push(p5);
+                }
+            }
+            if(rank>=1){
+                if(rem>=2){
+                    ret.push(p8);
+                }
+                if(rem<=5){
+                    ret.push(p7);
+                }
+            }
+            if(rank<=6){
+                if(rem>=2){
+                    ret.push(p4);
+                }
+                if(rem<=5){
+                    ret.push(p3)
+                }
+            }
+            if(rank<=5){
+                if(rem>=1){
+                    ret.push(p2);
+                }
+                if(rem>=1){
+                    ret.push(p1);
+                }
+            }
+
+            return ret;
+
+        case "BN":
+            var ret =[]
+            var p1 = index + 16 + 1;
+            var p2 = index + 16 - 1;
+            var p3 = index + 8 + 2;
+            var p4 = index + 8 - 2;
+            var p5 = index - 16 +1;
+            var p6 = index - 16 -1;
+            var p7 = index - 8 + 2;
+            var p8 = index - 8 - 2;
+
+            var rank = (index - index%8)/8;
+            var rem = index%8;
+
+            if(rank>=2){
+                if(rem>=1){
+                    ret.push(p6);
+                }
+                if(rem<=6){
+                    ret.push(p5);
+                }
+            }
+            if(rank>=1){
+                if(rem>=2){
+                    ret.push(p8);
+                }
+                if(rem<=5){
+                    ret.push(p7);
+                }
+            }
+            if(rank<=6){
+                if(rem>=2){
+                    ret.push(p4);
+                }
+                if(rem<=5){
+                    ret.push(p3)
+                }
+            }
+            if(rank<=5){
+                if(rem>=1){
+                    ret.push(p2);
+                }
+                if(rem>=1){
+                    ret.push(p1);
+                }
+            }
+
+            return ret;
+
         case "WK":
             var ret = []
             if(((index+9)-((index+9)%8))/8 == ((index+8)-((index+8)%8))/8 && (index+9<=63))
