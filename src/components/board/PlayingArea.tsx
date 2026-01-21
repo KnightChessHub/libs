@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Square from "../square/Square";
 import { nextPossibleMoves } from "../../algorithms/nextmove";
 
-const positions =[["BR", "BN", "", "BK", "BQ", "BB", "BN", ""],["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],["", "", "", "", "", "", "", ""],["", "", "", "BB", "", "BR", "", ""],["", "", "", "", "", "", "", ""],["", "", "", "", "", "", "", ""],["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],["WR","WN","WB","WK","WQ","WB","WN","WR"]]
+const positions =[["BR", "", "", "BK", "BQ", "BB", "BN", ""],["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],["", "", "", "", "WN", "", "", ""],["", "", "", "BB", "", "BR", "", ""],["", "", "", "", "", "", "", ""],["", "BN", "", "", "", "", "", ""],["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],["WR","WN","WB","WK","WQ","WB","","WR"]]
 
 const PlayingArea=()=>{
     const [selectedIndex, setSelectedIndex] = useState(0);
