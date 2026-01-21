@@ -1,4 +1,6 @@
-const Square=({index, object, isSelected, setSelectedIndex, isPosibleNextMove}:{index: number, object: String, isSelected: boolean, setSelectedIndex:(e:number)=>void, isPosibleNextMove: boolean})=>{
+import type React from "react";
+
+const Square=({index, object, isSelected, setSelectedIndex, isPosibleNextMove}:{index: number, object: React.ReactNode, isSelected: boolean, setSelectedIndex:(e:number)=>void, isPosibleNextMove: boolean})=>{
     const isDark = (index + Math.floor(index/8))%2==0;
     return(
         <div onClick={()=>setSelectedIndex(isSelected ? 0: index)} className={`w-full cursor-pointer aspect-square flex items-center justify-center relative text-xs md:text-sm ${isSelected ? "opacity-80" : ""}`} style={{backgroundColor:`${isDark ? "green": "whute"}`}}>

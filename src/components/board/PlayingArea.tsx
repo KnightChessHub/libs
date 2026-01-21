@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Square from "../square/Square";
 import { nextPossibleMoves } from "../../algorithms/nextmove";
+import { getIcon } from "../../algorithms/iconselection";
 
 const positions =[["BR", "", "", "BK", "BQ", "BB", "BN", ""],["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],["", "", "", "", "WN", "", "", ""],["", "", "", "BB", "", "BR", "", ""],["", "", "", "", "", "", "", ""],["", "BN", "", "", "", "", "", ""],["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],["WR","WN","WB","WK","WQ","WB","","WR"]]
 
@@ -20,7 +21,7 @@ const PlayingArea=()=>{
                         {
                             Array.from({length: 8}).map((_, col)=>{
                                     const index = 8* row + col
-                                    return <Square isPosibleNextMove={nextMoves.includes(index)} setSelectedIndex={setSelectedIndex} isSelected={index === selectedIndex} object={positions[row][col]} key={index} index={index}/>
+                                    return <Square isPosibleNextMove={nextMoves.includes(index)} setSelectedIndex={setSelectedIndex} isSelected={index === selectedIndex} object={getIcon(positions[row][col])} key={index} index={index}/>
                                 }
                             )
                         }
