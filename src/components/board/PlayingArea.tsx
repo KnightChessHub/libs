@@ -8,6 +8,12 @@ const positions =[["BR", "", "", "BK", "BQ", "BB", "BN", ""],["BP", "BP", "BP", 
 const PlayingArea=()=>{
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [nextMoves, setNextMoves] = useState([-1]);
+    const [selectedNextMove, setSelectedNextMove] = useState(-1);
+
+    useEffect(()=>{
+        console.log("selectedNextMove: ", selectedNextMove);
+        console.log("prev: ", selectedIndex);
+    },[selectedNextMove]);
 
     useEffect(()=>{
         setNextMoves(nextPossibleMoves(selectedIndex, positions[((selectedIndex)-((selectedIndex)%8))/8][(selectedIndex)%8]))
@@ -21,7 +27,7 @@ const PlayingArea=()=>{
                         {
                             Array.from({length: 8}).map((_, col)=>{
                                     const index = 8* row + col
-                                    return <Square isPosibleNextMove={nextMoves.includes(index)} setSelectedIndex={setSelectedIndex} isSelected={index === selectedIndex} object={getIcon(positions[row][col])} key={index} index={index}/>
+                                    return <Square selectedIndex={selectedIndex} setSelectedNextMove={setSelectedNextMove} isPosibleNextMove={nextMoves.includes(index)} setSelectedIndex={setSelectedIndex} isSelected={index === selectedIndex} object={getIcon(positions[row][col])} key={index} index={index}/>
                                 }
                             )
                         }

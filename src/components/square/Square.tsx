@@ -1,9 +1,9 @@
 import type React from "react";
 
-const Square=({index, object, isSelected, setSelectedIndex, isPosibleNextMove}:{index: number, object: React.ReactNode, isSelected: boolean, setSelectedIndex:(e:number)=>void, isPosibleNextMove: boolean})=>{
+const Square=({selectedIndex, setSelectedNextMove, index, object, isSelected, setSelectedIndex, isPosibleNextMove}:{selectedIndex: number, setSelectedNextMove: (e:number)=>void, index: number, object: React.ReactNode, isSelected: boolean, setSelectedIndex:(e:number)=>void, isPosibleNextMove: boolean})=>{
     const isDark = (index + Math.floor(index/8))%2==0;
     return(
-        <div onClick={()=>setSelectedIndex(isSelected ? -1: index)} className={`w-full cursor-pointer aspect-square flex items-center justify-center relative text-xs md:text-sm ${isSelected ? "opacity-80" : ""}`} style={{backgroundColor:`${isDark ? "green": "white"}`}}>
+        <div onClick={()=>{setSelectedIndex(isSelected ? -1: index); selectedIndex === -1 && setSelectedNextMove(index)}} className={`w-full cursor-pointer aspect-square flex items-center justify-center relative text-xs md:text-sm ${isSelected ? "opacity-80" : ""}`} style={{backgroundColor:`${isDark ? "green": "white"}`}}>
             { isSelected && <div className="absolute w-full h-full bg-yellow-500/40"></div> }
             <div className="">{object}</div>
             {
