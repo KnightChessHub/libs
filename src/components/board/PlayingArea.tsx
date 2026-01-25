@@ -3,7 +3,7 @@ import Square from "../square/Square";
 import { nextPossibleMoves } from "../../algorithms/nextmove";
 import { getIcon } from "../../algorithms/iconselection";
 
-const positions =[["BR", "", "", "BK", "BQ", "BB", "BN", ""],["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],["", "", "", "", "WN", "", "", ""],["", "", "", "BB", "", "BR", "", ""],["", "", "", "", "", "", "", ""],["", "BN", "", "", "", "", "", ""],["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],["WR","WN","WB","WK","WQ","WB","","WR"]]
+const positions =[["BR", "", "", "BK", "BQ", "BB", "BN", ""],["BP", "BP", "BP", "BP", "BP", "BP", "BP", ""],["", "", "", "", "WN", "", "", "BP"],["", "", "", "BB", "", "BR", "", ""],["", "", "", "", "", "", "", ""],["WP", "BN", "", "", "", "", "", "WP"],["", "WP", "WP", "WP", "WP", "WP", "WP", ""],["WR","WN","WB","WK","WQ","WB","","WR"]]
 
 const PlayingArea=()=>{
     const [selectedIndex, setSelectedIndex] = useState(0);

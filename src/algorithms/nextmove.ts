@@ -3,6 +3,8 @@ export const nextPossibleMoves=(index: number, key: string)=>{
         case "WP":
             if (index - 8 <0)
                 return []
+            if (index<48)
+                return [index - 8]
             else if (index - 16 <0)
                 return [index+8]
             else
@@ -11,6 +13,8 @@ export const nextPossibleMoves=(index: number, key: string)=>{
         case "BP":
             if (index + 8 >63)
                 return []
+            if (index>15)
+                return [index + 8]
             else if (index + 16 >63)
                 return [index+8]
             else
