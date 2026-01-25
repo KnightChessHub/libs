@@ -7,8 +7,8 @@ const Square=({index, object, isSelected, setSelectedIndex, isPosibleNextMove}:{
             { isSelected && <div className="absolute w-full h-full bg-yellow-500/40"></div> }
             <div className="">{object}</div>
             {
-                isPosibleNextMove && <div className="absolute w-full h-full flex items-center justify-center bg-yellow-100/40">
-                    <div className="h-2 w-2 bg-yellow-500 rounded-full shadow-xl border"></div>
+                isPosibleNextMove && <div className="absolute w-full h-full flex items-center justify-center bg-yellow-500/60">
+                    <div className="h-2 w-2 bg-yellow-900 rounded-full shadow-xl border transition-transform-all animate-pulse duration-100"></div>
                 </div>
             }
         </div>
