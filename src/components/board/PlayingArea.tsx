@@ -6,7 +6,7 @@ import { getIcon } from "../../algorithms/iconselection";
 const positions =[["BR", "", "", "BK", "BQ", "BB", "BN", ""],["BP", "BP", "BP", "BP", "BP", "BP", "BP", ""],["", "", "", "", "WN", "", "", "BP"],["", "", "", "BB", "", "BR", "", ""],["", "", "", "", "", "", "", ""],["WP", "BN", "", "", "", "", "", "WP"],["", "WP", "WP", "WP", "WP", "WP", "WP", ""],["WR","WN","WB","WK","WQ","WB","","WR"]]
 
 const PlayingArea=()=>{
-    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
     const [nextMoves, setNextMoves] = useState([-1]);
 
     useEffect(()=>{
