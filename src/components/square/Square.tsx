@@ -1,18 +1,33 @@
 import type React from "react";
 
-const Square=({selectedIndex, setSelectedNextMove, index, object, isSelected, setSelectedIndex, isPosibleNextMove}:{selectedIndex: number, setSelectedNextMove: (e:number)=>void, index: number, object: React.ReactNode, isSelected: boolean, setSelectedIndex:(e:number)=>void, isPosibleNextMove: boolean})=>{
-    const isDark = (index + Math.floor(index/8))%2==0;
-    return(
-        <div onClick={()=>{setSelectedIndex(isSelected ? -1: index); selectedIndex === -1 && setSelectedNextMove(index)}} className={`w-full cursor-pointer aspect-square flex items-center justify-center relative text-xs md:text-sm ${isSelected ? "opacity-80" : ""}`} style={{backgroundColor:`${isDark ? "green": "white"}`}}>
-            { isSelected && <div className="absolute w-full h-full bg-yellow-500/40"></div> }
-            <div className="">{object}</div>
+interface SquareProps {
+    index: number;
+    object: React.ReactNode;
+    isSelected: boolean;
+    isPosibleNextMove: boolean;
+    onSquareClick: () => void;
+}
+
+const Square = ({ index, object, isSelected, isPosibleNextMove, onSquareClick }: SquareProps) => {
+    const isDark = (index + Math.floor(index / 8)) % 2 === 0;
+
+    return (
+        <div
+            onClick={onSquareClick}
+            className={`w-full cursor-pointer aspect-square flex items-center justify-center relative text-xs md:text-sm ${isSelected ? "opacity-80" : ""}`}
+            style={{ backgroundColor: `${isDark ? "#769656" : "#eeeed2"}` }}
+        >
+            {isSelected && <div className="absolute w-full h-full bg-yellow-500/40"></div>}
+            <div className="z-10">{object}</div>
             {
-                isPosibleNextMove && <div className="absolute w-full h-full flex items-center justify-center bg-yellow-500/60">
-                    <div className="h-2 w-2 bg-yellow-900 rounded-full shadow-xl border transition-transform-all animate-pulse duration-100"></div>
-                </div>
+                isPosibleNextMove && (
+                    <div className="absolute w-full h-full flex items-center justify-center z-20 pointer-events-none">
+                        <div className="h-4 w-4 bg-black/10 rounded-full"></div>
+                    </div>
+                )
             }
         </div>
-    )
-}
+    );
+};
 
 export default Square;
