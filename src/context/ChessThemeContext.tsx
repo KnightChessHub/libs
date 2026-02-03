@@ -13,35 +13,35 @@ export interface ChessTheme {
 export const THEMES: Record<string, ChessTheme> = {
     classic: {
         name: 'Classic',
-        darkSquare: '#769656',
-        lightSquare: '#eeeed2',
-        selectedSquare: 'rgba(255, 255, 0, 0.5)',
-        highlightSquare: 'rgba(0, 0, 0, 0.1)',
-        coordinatesColor: '#769656'
+        darkSquare: '#739552', // Standard green
+        lightSquare: '#ebecd0', // Standard off-white
+        selectedSquare: 'rgba(235, 236, 208, 0.5)',
+        highlightSquare: 'rgba(0, 0, 0, 0.14)',
+        coordinatesColor: '#739552'
     },
     wood: {
         name: 'Wood',
-        darkSquare: '#b58863',
-        lightSquare: '#f0d9b5',
-        selectedSquare: 'rgba(205, 210, 106, 0.8)',
-        highlightSquare: 'rgba(0, 0, 0, 0.1)',
+        darkSquare: '#b58863', // Rich wood brown
+        lightSquare: '#f0d9b5', // Light wood
+        selectedSquare: 'rgba(247, 247, 105, 0.5)',
+        highlightSquare: 'rgba(0, 0, 0, 0.14)',
         coordinatesColor: '#b58863'
     },
     ice: {
         name: 'Ice',
-        darkSquare: '#a9c7d3',
-        lightSquare: '#e3ecf0',
-        selectedSquare: 'rgba(121, 169, 191, 0.6)',
-        highlightSquare: 'rgba(0, 0, 0, 0.05)',
-        coordinatesColor: '#a9c7d3'
+        darkSquare: '#8ca2ad', // Muted slate blue
+        lightSquare: '#dee3e6', // Cool grey
+        selectedSquare: 'rgba(100, 150, 200, 0.5)',
+        highlightSquare: 'rgba(0, 0, 0, 0.1)',
+        coordinatesColor: '#8ca2ad'
     },
     modern: {
         name: 'Modern',
-        darkSquare: '#4b7399',
-        lightSquare: '#eae9d2',
-        selectedSquare: 'rgba(255, 255, 50, 0.4)',
-        highlightSquare: 'rgba(0, 0, 0, 0.15)',
-        coordinatesColor: '#4b7399'
+        darkSquare: '#404040', // Deep charcoal
+        lightSquare: '#a0a0a0', // Neutral grey
+        selectedSquare: 'rgba(0, 120, 255, 0.3)',
+        highlightSquare: 'rgba(255, 255, 255, 0.1)',
+        coordinatesColor: '#404040'
     }
 };
 
