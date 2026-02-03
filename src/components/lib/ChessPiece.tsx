@@ -1,4 +1,3 @@
-import type React from 'react';
 import { getIcon } from '../../algorithms/iconselection';
 
 interface ChessPieceProps {

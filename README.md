@@ -1,74 +1,64 @@
-# React + TypeScript + Vite
+# KnightChess - World Class Chess Library
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+KnightChess is a professional-grade React chess library designed for beauty, flexibility, and performance.
 
-Currently, two official plugins are available:
+## Key Features
+- **Hooks-First Architecture**: Access game state and theme engine via `useChess` and `useChessTheme`.
+- **Premium Themes**: Support for artistic themes including Classic, Wood, Ice, and Modern.
+- **Glassmorphism UI**: Stunning modern design with blur effects and vibrant gradients.
+- **Fully Customizable**: Modular components (`ChessBoard`, `ChessSquare`, `ChessPiece`) allow you to build any chess UI.
+- **Move Precision**: High-quality move indicators and capture rings for perfect UX.
+- **Type Safe**: Written in TypeScript with full type definitions.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Usage
 
-## React Compiler
+### 1. Wrap your app with Providers
+```tsx
+import { ChessThemeProvider } from './KnightChess';
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+function App() {
+  return (
+    <ChessThemeProvider>
+      <MyChessGame />
+    </ChessThemeProvider>
+  );
+}
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Use the ChessBoard component
+```tsx
+import { ChessBoard, useChessTheme } from './KnightChess';
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+const MyChessGame = () => {
+  const { setTheme } = useChessTheme();
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+  return (
+    <div>
+      <ChessBoard />
+      <button onClick={() => setTheme('wood')}>Switch to Wood</button>
+    </div>
+  );
+};
 ```
-# libs
+
+### 3. Custom Logic with Hooks
+```tsx
+import { useChess } from './KnightChess';
+
+const CustomUI = () => {
+  const { board, turn, movePiece } = useChess();
+  // Build your own custom UI using the game state
+};
+```
+
+## Themes Supported
+- **Classic**: The gold standard green/white board.
+- **Wood**: Premium wooden aesthetic.
+- **Ice**: Cool and refreshing blue tones.
+- **Modern**: Sleek slate professional palette.
+
+## Installation
+Currently available as a local library in `src/KnightChess`.
+
+---
+*Created with ♥ by the KnightChess Team.*

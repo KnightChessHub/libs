@@ -1,4 +1,3 @@
-import type React from 'react';
 import { useChessTheme } from '../../context/ChessThemeContext';
 import ChessPiece from './ChessPiece';
 
