@@ -1,10 +1,10 @@
-export const nextPossibleMoves = (index: number, key: string, board: string[][]) => {
+export const nextPossibleMoves = (index: number, key: string, board: string[][], lastMove?: { from: number, to: number, piece: string } | null) => {
     if (!key) return [];
-    
+
     const moves: number[] = [];
     const color = key[0]; // 'W' or 'B'
     const type = key[1];
-    
+
     const row = Math.floor(index / 8);
     const col = index % 8;
 
@@ -65,6 +65,18 @@ export const nextPossibleMoves = (index: number, key: string, board: string[][])
                     const targetIndex = targetRow * 8 + targetCol;
                     if (isEnemy(targetIndex)) {
                         moves.push(targetIndex);
+                    }
+
+                    // En Passant
+                    if (lastMove && lastMove.piece === (color === "W" ? "BP" : "WP")) {
+                        const lastFromRow = Math.floor(lastMove.from / 8);
+                        const lastToRow = Math.floor(lastMove.to / 8);
+                        const lastToCol = lastMove.to % 8;
+
+                        // Was the last move a pawn double jump landing next to this pawn?
+                        if (Math.abs(lastFromRow - lastToRow) === 2 && lastToRow === row && lastToCol === targetCol) {
+                            moves.push(targetIndex);
+                        }
                     }
                 }
             }
