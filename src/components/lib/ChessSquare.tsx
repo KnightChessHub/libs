@@ -8,6 +8,8 @@ interface ChessSquareProps {
     isPossibleMove: boolean;
     onClick: () => void;
     showCoordinates?: boolean;
+    isCheck?: boolean;
+    isLastMove?: boolean;
 }
 
 const ChessSquare = ({
@@ -16,7 +18,9 @@ const ChessSquare = ({
     isSelected,
     isPossibleMove,
     onClick,
-    showCoordinates = true
+    showCoordinates = true,
+    isCheck,
+    isLastMove
 }: ChessSquareProps) => {
     const { theme } = useChessTheme();
     const row = Math.floor(index / 8);
@@ -33,11 +37,25 @@ const ChessSquare = ({
             className="relative w-full aspect-square flex items-center justify-center cursor-pointer select-none group transition-colors duration-200"
             style={{ backgroundColor: squareColor }}
         >
+            {/* Last Move Highlight */}
+            {isLastMove && (
+                <div
+                    className="absolute inset-0 z-0 bg-yellow-400/20"
+                />
+            )}
+
             {/* Selection Highlight */}
             {isSelected && (
                 <div
                     className="absolute inset-0 z-0"
                     style={{ backgroundColor: theme.selectedSquare }}
+                />
+            )}
+
+            {/* Check Highlight */}
+            {isCheck && (
+                <div
+                    className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-red-600/60 to-transparent"
                 />
             )}
 

@@ -10,6 +10,10 @@ export interface Move {
     piece: string;
     capturedPiece?: string;
     boardBefore: BoardState;
+    san?: string; // Standard Algebraic Notation
+    isCheck?: boolean;
+    isCheckmate?: boolean;
+    promotedTo?: string;
 }
 
 export interface UseChessReturn {
@@ -22,8 +26,13 @@ export interface UseChessReturn {
     isCheck: boolean;
     isCheckmate: boolean;
     isStalemate: boolean;
+    isDraw: boolean;
+    drawReason: string | null;
+    capturedPieces: { W: string[], B: string[] };
+    promotionPending: { from: number, to: number } | null;
     selectSquare: (index: number) => void;
-    movePiece: (fromIndex: number, toIndex: number) => void;
+    movePiece: (fromIndex: number, toIndex: number, promotionPiece?: string) => void;
+    cancelPromotion: () => void;
     resetGame: () => void;
     isPieceAt: (index: number) => boolean;
     getPieceAt: (index: number) => string;
@@ -48,10 +57,6 @@ const isSquareAttacked = (targetIndex: number, attackerColor: PieceColor, board:
         for (let c = 0; c < 8; c++) {
             const piece = board[r][c];
             if (piece && piece[0] === attackerColor) {
-                // For checking attacks, we consider all pseudo-legal moves,
-                // as a piece can still attack even if its own king is in check.
-                // However, for simplicity and to avoid infinite recursion, we pass null for lastMove here.
-                // This might need refinement for specific edge cases like pinned pieces attacking.
                 const moves = nextPossibleMoves(r * 8 + c, piece, board, null);
                 if (moves.includes(targetIndex)) return true;
             }
@@ -76,11 +81,43 @@ const hasPieceMoved = (index: number, history: Move[]) => {
     return history.some(move => move.from === index || move.to === index);
 };
 
+// Simplified board hashing for repetition check
+const hashBoard = (board: BoardState, turn: PieceColor): string => {
+    return JSON.stringify(board) + turn;
+};
+
+const getMaterial = (board: BoardState) => {
+    const pieces: string[] = [];
+    board.forEach(row => row.forEach(p => { if (p) pieces.push(p); }));
+    return pieces;
+};
+
+const isInsufficientMaterial = (board: BoardState): boolean => {
+    const pieces = getMaterial(board);
+    if (pieces.length === 2) return true; // K vs K
+    if (pieces.length === 3) {
+        // K + (N|B) vs K
+        return pieces.some(p => p.includes('N') || p.includes('B'));
+    }
+    if (pieces.length === 4) {
+        // KB vs KB (same color bishops? - simplified for now to just KB vs KB)
+        // This is a basic check; full rules are complex (same color bishops)
+        // For professional completeness, we'd check bishop square colors.
+        return false;
+    }
+    return false;
+};
+
 export const useChess = (): UseChessReturn => {
     const [board, setBoard] = useState<BoardState>(INITIAL_BOARD);
     const [turn, setTurn] = useState<PieceColor>('W');
     const [selectedIndex, setSelectedIndex] = useState<number>(-1);
     const [history, setHistory] = useState<Move[]>([]);
+    const [capturedPieces, setCapturedPieces] = useState<{ W: string[], B: string[] }>({ W: [], B: [] });
+    // promotionPending stores the move details waiting for user selection
+    const [promotionPending, setPromotionPending] = useState<{ from: number, to: number } | null>(null);
+    const [halfMoveClock, setHalfMoveClock] = useState(0);
+    const [boardHistory, setBoardHistory] = useState<string[]>([hashBoard(INITIAL_BOARD, 'W')]);
 
     const lastMove = useMemo(() => (history.length > 0 ? history[history.length - 1] : null), [history]);
 
@@ -98,15 +135,14 @@ export const useChess = (): UseChessReturn => {
 
     const inCheck = useMemo(() => {
         const kingPos = findKing(turn, board);
-        if (kingPos === -1) return false; // Should not happen in a valid game
+        if (kingPos === -1) return false;
         return isSquareAttacked(kingPos, turn === 'W' ? 'B' : 'W', board);
     }, [board, turn]);
 
-    // Function to get truly legal moves (that don't leave king in check)
+    // Function to get truly legal moves
     const getLegalMoves = useCallback((index: number, piece: string, currentBoard: BoardState, lMove: Move | null, moveHistory: Move[]) => {
         const pseudoMoves = nextPossibleMoves(index, piece, currentBoard, lMove);
         const legalMoves: number[] = [];
-
         const color = piece[0] as PieceColor;
         const fromR = Math.floor(index / 8);
         const fromC = index % 8;
@@ -114,8 +150,6 @@ export const useChess = (): UseChessReturn => {
         for (const toIndex of pseudoMoves) {
             const toR = Math.floor(toIndex / 8);
             const toC = toIndex % 8;
-
-            // Simulate move
             const tempBoard = currentBoard.map(row => [...row]);
 
             // Handle en passant simulation
@@ -133,23 +167,21 @@ export const useChess = (): UseChessReturn => {
             }
         }
 
-        // Add Castling moves if piece is a King
+        // Add Castling
         if (piece[1] === 'K' && !hasPieceMoved(index, moveHistory)) {
             const row = color === 'W' ? 7 : 0;
             const attackerColor = color === 'W' ? 'B' : 'W';
-
-            // Check if king is in check
             const kingInCheck = isSquareAttacked(row * 8 + 4, attackerColor, currentBoard);
 
             if (!kingInCheck) {
-                // Short castle (King side)
+                // Short castle
                 if (!hasPieceMoved(row * 8 + 7, moveHistory) &&
                     currentBoard[row][5] === "" && currentBoard[row][6] === "" &&
                     !isSquareAttacked(row * 8 + 5, attackerColor, currentBoard) &&
                     !isSquareAttacked(row * 8 + 6, attackerColor, currentBoard)) {
                     legalMoves.push(row * 8 + 6);
                 }
-                // Long castle (Queen side)
+                // Long castle
                 if (!hasPieceMoved(row * 8 + 0, moveHistory) &&
                     currentBoard[row][1] === "" && currentBoard[row][2] === "" && currentBoard[row][3] === "" &&
                     !isSquareAttacked(row * 8 + 3, attackerColor, currentBoard) &&
@@ -158,7 +190,6 @@ export const useChess = (): UseChessReturn => {
                 }
             }
         }
-
         return legalMoves;
     }, []);
 
@@ -186,7 +217,22 @@ export const useChess = (): UseChessReturn => {
     const isCheckmate = inCheck && allLegalMoves.length === 0;
     const isStalemate = !inCheck && allLegalMoves.length === 0;
 
-    const movePiece = useCallback((fromIndex: number, toIndex: number) => {
+    // Advanced Draw Conditions
+    const drawState = useMemo(() => {
+        if (isStalemate) return "Stalemate";
+        if (halfMoveClock >= 100) return "50-Move Rule"; // 50 moves each = 100 half moves
+        if (isInsufficientMaterial(board)) return "Insufficient Material";
+
+        // Threefold Repetition
+        const currentHash = hashBoard(board, turn);
+        // We include current state, so count should be 3
+        const count = boardHistory.filter(h => h === currentHash).length;
+        if (count >= 3) return "Threefold Repetition";
+
+        return null;
+    }, [isStalemate, halfMoveClock, board, boardHistory, turn]);
+
+    const movePiece = useCallback((fromIndex: number, toIndex: number, promotionPiece?: string) => {
         const fromR = Math.floor(fromIndex / 8);
         const fromC = fromIndex % 8;
         const toR = Math.floor(toIndex / 8);
@@ -194,11 +240,19 @@ export const useChess = (): UseChessReturn => {
 
         let piece = board[fromR][fromC];
         const targetPiece = board[toR][toC];
+
+        // Handle Promotion Request
+        if (piece[1] === 'P' && (toR === 0 || toR === 7) && !promotionPiece) {
+            setPromotionPending({ from: fromIndex, to: toIndex });
+            return;
+        }
+
+        // If we are here, essentially we are executing the move
         const newBoard = board.map(row => [...row]);
+        let captured = targetPiece;
+        let isPawnMoveOrCapture = piece[1] === 'P' || targetPiece !== "";
 
-        let capturedPiece = targetPiece;
-
-        // Castling move execution
+        // Castling
         if (piece[1] === 'K' && Math.abs(fromC - toC) === 2) {
             const rookFromCol = toC === 6 ? 7 : 0;
             const rookToCol = toC === 6 ? 5 : 3;
@@ -206,36 +260,64 @@ export const useChess = (): UseChessReturn => {
             newBoard[fromR][rookFromCol] = "";
         }
 
-        // En Passant logic
+        // En Passant
         if (piece[1] === 'P' && fromC !== toC && targetPiece === "") {
-            // This is an en passant capture
             const captureRow = piece[0] === 'W' ? toR + 1 : toR - 1;
-            capturedPiece = newBoard[captureRow][toC];
+            captured = newBoard[captureRow][toC];
             newBoard[captureRow][toC] = "";
+            isPawnMoveOrCapture = true;
         }
 
-        // Pawn Promotion (Auto-promote to Queen for professional simplicity)
-        if (piece[1] === 'P' && (toR === 0 || toR === 7)) {
-            piece = `${piece[0]}Q`;
+        // Apply Promotion
+        if (promotionPiece) {
+            piece = `${piece[0]}${promotionPiece}`;
         }
 
         newBoard[toR][toC] = piece;
         newBoard[fromR][fromC] = "";
 
-        setHistory(prev => [...prev, {
+        // Capture Tracking
+        if (captured) {
+            setCapturedPieces(prev => ({
+                ...prev,
+                [turn]: [...prev[turn], captured] // Track what 'turn' captured (so it's enemy piece)
+            }));
+        }
+
+        // History
+        const moveRecord: Move = {
             from: fromIndex,
             to: toIndex,
-            piece: piece,
-            capturedPiece: capturedPiece || undefined,
-            boardBefore: board
-        }]);
-
+            piece,
+            capturedPiece: captured || undefined,
+            boardBefore: board,
+            promotedTo: promotionPiece
+        };
+        const newHistory = [...history, moveRecord];
+        setHistory(newHistory);
         setBoard(newBoard);
-        setTurn(prev => (prev === 'W' ? 'B' : 'W') as PieceColor);
+
+        // Update Game State
+        const nextTurn = turn === 'W' ? 'B' : 'W';
+        setTurn(nextTurn);
         setSelectedIndex(-1);
-    }, [board]);
+        setPromotionPending(null);
+
+        // Clocks & History for Draws
+        setHalfMoveClock(prev => isPawnMoveOrCapture ? 0 : prev + 1);
+        setBoardHistory(prev => [...prev, hashBoard(newBoard, nextTurn)]);
+
+    }, [board, history, turn, halfMoveClock]);
+
+    const cancelPromotion = useCallback(() => {
+        setPromotionPending(null);
+        setSelectedIndex(-1);
+    }, []);
 
     const selectSquare = useCallback((index: number) => {
+        if (drawState || isCheckmate) return; // Game Over
+        if (promotionPending) return; // Must finish promotion
+
         const piece = getPieceAt(index);
 
         // If clicking a valid move square, execute move
@@ -250,13 +332,17 @@ export const useChess = (): UseChessReturn => {
         } else {
             setSelectedIndex(-1);
         }
-    }, [getPieceAt, nextMoves, selectedIndex, turn, movePiece]);
+    }, [getPieceAt, nextMoves, selectedIndex, turn, movePiece, drawState, isCheckmate, promotionPending]);
 
     const resetGame = useCallback(() => {
         setBoard(INITIAL_BOARD);
         setTurn('W');
         setSelectedIndex(-1);
         setHistory([]);
+        setCapturedPieces({ W: [], B: [] });
+        setBoardHistory([hashBoard(INITIAL_BOARD, 'W')]);
+        setHalfMoveClock(0);
+        setPromotionPending(null);
     }, []);
 
     return {
@@ -269,8 +355,13 @@ export const useChess = (): UseChessReturn => {
         isCheck: inCheck,
         isCheckmate,
         isStalemate,
+        isDraw: !!drawState,
+        drawReason: drawState,
+        capturedPieces,
+        promotionPending,
         selectSquare,
         movePiece,
+        cancelPromotion,
         resetGame,
         isPieceAt,
         getPieceAt
