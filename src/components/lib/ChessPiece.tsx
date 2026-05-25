@@ -1,22 +1,38 @@
-import { getIcon } from '../../algorithms/iconselection';
 
-interface ChessPieceProps {
-    piece: string;
-    isDragging?: boolean;
+import React from 'react';
+import { motion } from 'framer-motion';
+
+export interface ChessPieceProps {
+    type: string; // e.g., 'WP', 'BN'
+    squareSize?: number;
+    draggable?: boolean;
 }
 
-const ChessPiece = ({ piece, isDragging }: ChessPieceProps) => {
-    if (!piece) return null;
+const ChessPiece: React.FC<ChessPieceProps> = ({ type, squareSize = 70, draggable = true }) => {
+    if (!type) return null;
+
+    const color = type[0] === 'W' ? 'white' : 'black';
+    const pieceType = type[1].toLowerCase();
+
+    // Construct asset path
+    const src = `/src/assets/pieces/${type.toLowerCase()}.png`;
 
     return (
-        <div
-            className={`w-full h-full flex items-center justify-center transition-transform duration-200 ease-in-out ${isDragging ? 'scale-110 opacity-70' : 'scale-100'
-                }`}
+        <motion.div
+            layoutId={type + '-' + Math.random()} // unique id per instance for animations
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="flex items-center justify-center pointer-events-none"
+            style={{ width: squareSize, height: squareSize }}
         >
-            <div className="w-[85%] h-[85%] flex items-center justify-center pointer-events-none">
-                {getIcon(piece)}
-            </div>
-        </div>
+            <img
+                src={src}
+                alt={type}
+                className="w-[85%] h-[85%] object-contain drop-shadow-xl select-none"
+            />
+        </motion.div>
     );
 };
 

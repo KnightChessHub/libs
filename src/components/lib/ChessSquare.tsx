@@ -1,106 +1,80 @@
-import { useChessTheme } from '../../context/ChessThemeContext';
-import ChessPiece from './ChessPiece';
+
+import React from 'react';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
 
 interface ChessSquareProps {
     index: number;
     piece: string;
     isSelected: boolean;
     isPossibleMove: boolean;
+    isCheck: boolean;
+    isLastMove: boolean;
     onClick: () => void;
     showCoordinates?: boolean;
-    isCheck?: boolean;
-    isLastMove?: boolean;
 }
 
-const ChessSquare = ({
+const ChessSquare: React.FC<ChessSquareProps> = ({
     index,
     piece,
     isSelected,
     isPossibleMove,
+    isCheck,
+    isLastMove,
     onClick,
     showCoordinates = true,
-    isCheck,
-    isLastMove
-}: ChessSquareProps) => {
-    const { theme } = useChessTheme();
+}) => {
     const row = Math.floor(index / 8);
     const col = index % 8;
-    const isDark = (row + col) % 2 !== 0;
+    const isLight = (row + col) % 2 === 0;
 
-    const squareColor = isDark ? theme.darkSquare : theme.lightSquare;
-    const file = String.fromCharCode(97 + col);
-    const rank = 8 - row;
+    const files = 'abcdefgh';
+    const ranks = '87654321';
 
     return (
         <div
             onClick={onClick}
-            className="relative w-full aspect-square flex items-center justify-center cursor-pointer select-none group transition-colors duration-200"
-            style={{ backgroundColor: squareColor }}
+            className={cn(
+                "relative flex items-center justify-center transition-colors duration-200 cursor-pointer",
+                isLight ? "bg-[#ebecd0]" : "bg-[#779556]",
+                isSelected && "bg-[#f5f682]",
+                isLastMove && "bg-[#f5f682]/80",
+                isCheck && "bg-red-500/80 shadow-[inset_0_0_20px_rgba(255,0,0,0.5)]"
+            )}
         >
-            {/* Last Move Highlight */}
-            {isLastMove && (
-                <div
-                    className="absolute inset-0 z-0 bg-yellow-400/20"
-                />
-            )}
-
-            {/* Selection Highlight */}
-            {isSelected && (
-                <div
-                    className="absolute inset-0 z-0"
-                    style={{ backgroundColor: theme.selectedSquare }}
-                />
-            )}
-
-            {/* Check Highlight */}
-            {isCheck && (
-                <div
-                    className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-red-600/60 to-transparent"
-                />
-            )}
-
-            {/* Possible Move Indicator */}
+            {/* Legal move indicator */}
             {isPossibleMove && (
-                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                    {piece ? (
-                        // Capture indicator
-                        <div className="w-[90%] h-[90%] border-4 border-black/10 rounded-full" />
-                    ) : (
-                        // Move indicator
-                        <div className="w-4 h-4 bg-black/10 rounded-full" />
-                    )}
-                </div>
+                <div className={cn(
+                    "rounded-full z-10",
+                    piece ? "w-[90%] h-[90%] border-4 border-black/10" : "w-4 h-4 bg-black/10"
+                )} />
             )}
 
             {/* Coordinates */}
             {showCoordinates && (
                 <>
                     {col === 0 && (
-                        <span
-                            className="absolute top-0.5 left-0.5 text-[10px] font-bold pointer-events-none"
-                            style={{ color: isDark ? theme.lightSquare : theme.darkSquare, opacity: 0.6 }}
-                        >
-                            {rank}
+                        <span className={cn(
+                            "absolute top-0.5 left-0.5 text-[10px] font-bold select-none",
+                            isLight ? "text-[#779556]" : "text-[#ebecd0]"
+                        )}>
+                            {ranks[row]}
                         </span>
                     )}
                     {row === 7 && (
-                        <span
-                            className="absolute bottom-0.5 right-0.5 text-[10px] font-bold pointer-events-none"
-                            style={{ color: isDark ? theme.lightSquare : theme.darkSquare, opacity: 0.6 }}
-                        >
-                            {file}
+                        <span className={cn(
+                            "absolute bottom-0.5 right-0.5 text-[10px] font-bold select-none",
+                            isLight ? "text-[#779556]" : "text-[#ebecd0]"
+                        )}>
+                            {files[col]}
                         </span>
                     )}
                 </>
             )}
-
-            {/* Chess Piece */}
-            <div className="z-10 w-full h-full">
-                <ChessPiece piece={piece} />
-            </div>
-
-            {/* Hover Effect */}
-            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors pointer-events-none" />
         </div>
     );
 };

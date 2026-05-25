@@ -1,27 +1,18 @@
-import { useState, useCallback, useMemo } from 'react';
-import { nextPossibleMoves } from '../algorithms/nextmove';
+
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { ChessGame } from '../engine/core/ChessGame';
+import { Color, PieceType, PIECE_MASK, COLOR_MASK, MoveFlags } from '../engine/core/types';
+import type { Move } from '../engine/core/types';
 
 export type PieceColor = 'W' | 'B';
 export type BoardState = string[][];
-
-export interface Move {
-    from: number;
-    to: number;
-    piece: string;
-    capturedPiece?: string;
-    boardBefore: BoardState;
-    san?: string; // Standard Algebraic Notation
-    isCheck?: boolean;
-    isCheckmate?: boolean;
-    promotedTo?: string;
-}
 
 export interface UseChessReturn {
     board: BoardState;
     turn: PieceColor;
     selectedIndex: number;
     nextMoves: number[];
-    history: Move[];
+    history: { san: string }[];
     lastMove: Move | null;
     isCheck: boolean;
     isCheckmate: boolean;
@@ -38,325 +29,129 @@ export interface UseChessReturn {
     getPieceAt: (index: number) => string;
 }
 
-const INITIAL_BOARD: BoardState = [
-    ["BR", "BN", "BB", "BQ", "BK", "BB", "BN", "BR"],
-    ["BP", "BP", "BP", "BP", "BP", "BP", "BP", "BP"],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["", "", "", "", "", "", "", ""],
-    ["WP", "WP", "WP", "WP", "WP", "WP", "WP", "WP"],
-    ["WR", "WN", "WB", "WQ", "WK", "WB", "WN", "WR"]
-];
-
-/**
- * Helper to check if a square is attacked by a given color
- */
-const isSquareAttacked = (targetIndex: number, attackerColor: PieceColor, board: BoardState) => {
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-            const piece = board[r][c];
-            if (piece && piece[0] === attackerColor) {
-                const moves = nextPossibleMoves(r * 8 + c, piece, board, null);
-                if (moves.includes(targetIndex)) return true;
-            }
-        }
-    }
-    return false;
-};
-
-/**
- * Find the king's position
- */
-const findKing = (color: PieceColor, board: BoardState) => {
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-            if (board[r][c] === `${color}K`) return r * 8 + c;
-        }
-    }
-    return -1;
-};
-
-const hasPieceMoved = (index: number, history: Move[]) => {
-    return history.some(move => move.from === index || move.to === index);
-};
-
-// Simplified board hashing for repetition check
-const hashBoard = (board: BoardState, turn: PieceColor): string => {
-    return JSON.stringify(board) + turn;
-};
-
-const getMaterial = (board: BoardState) => {
-    const pieces: string[] = [];
-    board.forEach(row => row.forEach(p => { if (p) pieces.push(p); }));
-    return pieces;
-};
-
-const isInsufficientMaterial = (board: BoardState): boolean => {
-    const pieces = getMaterial(board);
-    if (pieces.length === 2) return true; // K vs K
-    if (pieces.length === 3) {
-        // K + (N|B) vs K
-        return pieces.some(p => p.includes('N') || p.includes('B'));
-    }
-    if (pieces.length === 4) {
-        // KB vs KB (same color bishops? - simplified for now to just KB vs KB)
-        // This is a basic check; full rules are complex (same color bishops)
-        // For professional completeness, we'd check bishop square colors.
-        return false;
-    }
-    return false;
-};
-
-export const useChess = (): UseChessReturn => {
-    const [board, setBoard] = useState<BoardState>(INITIAL_BOARD);
-    const [turn, setTurn] = useState<PieceColor>('W');
+export const useChess = (initialFen?: string, onMove?: (san: string) => void): UseChessReturn => {
+    const [game, setGame] = useState(() => new ChessGame(initialFen));
+    const [board, setBoard] = useState<BoardState>(() => engineBoardToState(game.position.board));
     const [selectedIndex, setSelectedIndex] = useState<number>(-1);
-    const [history, setHistory] = useState<Move[]>([]);
-    const [capturedPieces, setCapturedPieces] = useState<{ W: string[], B: string[] }>({ W: [], B: [] });
-    // promotionPending stores the move details waiting for user selection
     const [promotionPending, setPromotionPending] = useState<{ from: number, to: number } | null>(null);
-    const [halfMoveClock, setHalfMoveClock] = useState(0);
-    const [boardHistory, setBoardHistory] = useState<string[]>([hashBoard(INITIAL_BOARD, 'W')]);
 
-    const lastMove = useMemo(() => (history.length > 0 ? history[history.length - 1] : null), [history]);
-
-    const isPieceAt = useCallback((index: number) => {
-        const r = Math.floor(index / 8);
-        const c = index % 8;
-        return board[r][c] !== "";
-    }, [board]);
-
-    const getPieceAt = useCallback((index: number) => {
-        const r = Math.floor(index / 8);
-        const c = index % 8;
-        return board[r][c];
-    }, [board]);
-
-    const inCheck = useMemo(() => {
-        const kingPos = findKing(turn, board);
-        if (kingPos === -1) return false;
-        return isSquareAttacked(kingPos, turn === 'W' ? 'B' : 'W', board);
-    }, [board, turn]);
-
-    // Function to get truly legal moves
-    const getLegalMoves = useCallback((index: number, piece: string, currentBoard: BoardState, lMove: Move | null, moveHistory: Move[]) => {
-        const pseudoMoves = nextPossibleMoves(index, piece, currentBoard, lMove);
-        const legalMoves: number[] = [];
-        const color = piece[0] as PieceColor;
-        const fromR = Math.floor(index / 8);
-        const fromC = index % 8;
-
-        for (const toIndex of pseudoMoves) {
-            const toR = Math.floor(toIndex / 8);
-            const toC = toIndex % 8;
-            const tempBoard = currentBoard.map(row => [...row]);
-
-            // Handle en passant simulation
-            if (piece[1] === 'P' && fromC !== toC && tempBoard[toR][toC] === "") {
-                const captureRow = color === 'W' ? toR + 1 : toR - 1;
-                tempBoard[captureRow][toC] = "";
-            }
-
-            tempBoard[toR][toC] = piece;
-            tempBoard[fromR][fromC] = "";
-
-            const kingPos = findKing(color, tempBoard);
-            if (kingPos !== -1 && !isSquareAttacked(kingPos, color === 'W' ? 'B' : 'W', tempBoard)) {
-                legalMoves.push(toIndex);
-            }
-        }
-
-        // Add Castling
-        if (piece[1] === 'K' && !hasPieceMoved(index, moveHistory)) {
-            const row = color === 'W' ? 7 : 0;
-            const attackerColor = color === 'W' ? 'B' : 'W';
-            const kingInCheck = isSquareAttacked(row * 8 + 4, attackerColor, currentBoard);
-
-            if (!kingInCheck) {
-                // Short castle
-                if (!hasPieceMoved(row * 8 + 7, moveHistory) &&
-                    currentBoard[row][5] === "" && currentBoard[row][6] === "" &&
-                    !isSquareAttacked(row * 8 + 5, attackerColor, currentBoard) &&
-                    !isSquareAttacked(row * 8 + 6, attackerColor, currentBoard)) {
-                    legalMoves.push(row * 8 + 6);
-                }
-                // Long castle
-                if (!hasPieceMoved(row * 8 + 0, moveHistory) &&
-                    currentBoard[row][1] === "" && currentBoard[row][2] === "" && currentBoard[row][3] === "" &&
-                    !isSquareAttacked(row * 8 + 3, attackerColor, currentBoard) &&
-                    !isSquareAttacked(row * 8 + 2, attackerColor, currentBoard)) {
-                    legalMoves.push(row * 8 + 2);
-                }
-            }
-        }
-        return legalMoves;
+    // Sync state helpers
+    const updateLocalState = useCallback((newGame: ChessGame) => {
+        setGame(newGame);
+        setBoard(engineBoardToState(newGame.position.board));
+        setSelectedIndex(-1);
+        setPromotionPending(null);
     }, []);
+
+    useEffect(() => {
+        if (initialFen && initialFen !== game.position.getFen()) {
+            updateLocalState(new ChessGame(initialFen));
+        }
+    }, [initialFen, updateLocalState, game]);
+
+    const turn: PieceColor = game.position.turn === Color.WHITE ? 'W' : 'B';
+    const isCheck = game.position.isAttacked(
+        game.position.findKing(game.position.turn),
+        game.position.turn === Color.WHITE ? Color.BLACK : Color.WHITE
+    );
+
+    const gameOver = game.isGameOver();
+    const isCheckmate = gameOver.reason === 'checkmate';
+    const isStalemate = gameOver.reason === 'stalemate';
+    const isDraw = gameOver.over && !isCheckmate;
+    const drawReason = gameOver.reason || null;
+
+    const lastMove = game.history.length > 0 ? game.history[game.history.length - 1].move : null;
 
     const nextMoves = useMemo(() => {
         if (selectedIndex === -1) return [];
-        const piece = getPieceAt(selectedIndex);
-        if (!piece || piece[0] !== turn) return [];
-        return getLegalMoves(selectedIndex, piece, board, lastMove, history);
-    }, [selectedIndex, board, turn, getPieceAt, lastMove, history, getLegalMoves]);
+        return game.position.generateMoves()
+            .filter(m => m.from === selectedIndex)
+            .map(m => m.to);
+    }, [selectedIndex, game]);
 
-    const allLegalMoves = useMemo(() => {
-        const moves: { from: number, to: number }[] = [];
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const piece = board[r][c];
-                if (piece && piece[0] === turn) {
-                    const lMoves = getLegalMoves(r * 8 + c, piece, board, lastMove, history);
-                    lMoves.forEach(to => moves.push({ from: r * 8 + c, to }));
+    const selectSquare = useCallback((index: number) => {
+        if (gameOver.over) return;
+        if (promotionPending) return;
+
+        const piece = game.position.board[index];
+        const color = piece & COLOR_MASK;
+
+        // If clicking a valid move square, execute move
+        if (nextMoves.includes(index)) {
+            const move = game.position.generateMoves().find(m => m.from === selectedIndex && m.to === index);
+            if (move) {
+                if (move.flags & MoveFlags.PROMOTION) {
+                    setPromotionPending({ from: selectedIndex, to: index });
+                } else {
+                    const san = game.moveToSan(move);
+                    game.move(move);
+                    updateLocalState(new ChessGame(game.position.getFen()));
+                    if (onMove) onMove(san);
                 }
             }
-        }
-        return moves;
-    }, [board, turn, lastMove, history, getLegalMoves]);
-
-    const isCheckmate = inCheck && allLegalMoves.length === 0;
-    const isStalemate = !inCheck && allLegalMoves.length === 0;
-
-    // Advanced Draw Conditions
-    const drawState = useMemo(() => {
-        if (isStalemate) return "Stalemate";
-        if (halfMoveClock >= 100) return "50-Move Rule"; // 50 moves each = 100 half moves
-        if (isInsufficientMaterial(board)) return "Insufficient Material";
-
-        // Threefold Repetition
-        const currentHash = hashBoard(board, turn);
-        // We include current state, so count should be 3
-        const count = boardHistory.filter(h => h === currentHash).length;
-        if (count >= 3) return "Threefold Repetition";
-
-        return null;
-    }, [isStalemate, halfMoveClock, board, boardHistory, turn]);
-
-    const movePiece = useCallback((fromIndex: number, toIndex: number, promotionPiece?: string) => {
-        const fromR = Math.floor(fromIndex / 8);
-        const fromC = fromIndex % 8;
-        const toR = Math.floor(toIndex / 8);
-        const toC = toIndex % 8;
-
-        let piece = board[fromR][fromC];
-        const targetPiece = board[toR][toC];
-
-        // Handle Promotion Request
-        if (piece[1] === 'P' && (toR === 0 || toR === 7) && !promotionPiece) {
-            setPromotionPending({ from: fromIndex, to: toIndex });
             return;
         }
 
-        // If we are here, essentially we are executing the move
-        const newBoard = board.map(row => [...row]);
-        let captured = targetPiece;
-        let isPawnMoveOrCapture = piece[1] === 'P' || targetPiece !== "";
-
-        // Castling
-        if (piece[1] === 'K' && Math.abs(fromC - toC) === 2) {
-            const rookFromCol = toC === 6 ? 7 : 0;
-            const rookToCol = toC === 6 ? 5 : 3;
-            newBoard[fromR][rookToCol] = newBoard[fromR][rookFromCol];
-            newBoard[fromR][rookFromCol] = "";
+        // Handle selection
+        if (piece !== 0 && color === game.position.turn) {
+            setSelectedIndex(index === selectedIndex ? -1 : index);
+        } else {
+            setSelectedIndex(-1);
         }
+    }, [game, selectedIndex, nextMoves, promotionPending, gameOver.over, updateLocalState]);
 
-        // En Passant
-        if (piece[1] === 'P' && fromC !== toC && targetPiece === "") {
-            const captureRow = piece[0] === 'W' ? toR + 1 : toR - 1;
-            captured = newBoard[captureRow][toC];
-            newBoard[captureRow][toC] = "";
-            isPawnMoveOrCapture = true;
+    const movePiece = useCallback((fromIndex: number, toIndex: number, promotionPiece?: string) => {
+        const moves = game.position.generateMoves();
+        const move = moves.find(m => m.from === fromIndex && m.to === toIndex &&
+            (!promotionPiece || (m.promotion === charToPieceType(promotionPiece))));
+
+        if (move) {
+            const san = game.moveToSan(move);
+            game.move(move);
+            updateLocalState(new ChessGame(game.position.getFen()));
+            if (onMove) onMove(san);
         }
-
-        // Apply Promotion
-        if (promotionPiece) {
-            piece = `${piece[0]}${promotionPiece}`;
-        }
-
-        newBoard[toR][toC] = piece;
-        newBoard[fromR][fromC] = "";
-
-        // Capture Tracking
-        if (captured) {
-            setCapturedPieces(prev => ({
-                ...prev,
-                [turn]: [...prev[turn], captured] // Track what 'turn' captured (so it's enemy piece)
-            }));
-        }
-
-        // History
-        const moveRecord: Move = {
-            from: fromIndex,
-            to: toIndex,
-            piece,
-            capturedPiece: captured || undefined,
-            boardBefore: board,
-            promotedTo: promotionPiece
-        };
-        const newHistory = [...history, moveRecord];
-        setHistory(newHistory);
-        setBoard(newBoard);
-
-        // Update Game State
-        const nextTurn = turn === 'W' ? 'B' : 'W';
-        setTurn(nextTurn);
-        setSelectedIndex(-1);
-        setPromotionPending(null);
-
-        // Clocks & History for Draws
-        setHalfMoveClock(prev => isPawnMoveOrCapture ? 0 : prev + 1);
-        setBoardHistory(prev => [...prev, hashBoard(newBoard, nextTurn)]);
-
-    }, [board, history, turn, halfMoveClock]);
+    }, [game, updateLocalState]);
 
     const cancelPromotion = useCallback(() => {
         setPromotionPending(null);
         setSelectedIndex(-1);
     }, []);
 
-    const selectSquare = useCallback((index: number) => {
-        if (drawState || isCheckmate) return; // Game Over
-        if (promotionPending) return; // Must finish promotion
-
-        const piece = getPieceAt(index);
-
-        // If clicking a valid move square, execute move
-        if (nextMoves.includes(index)) {
-            movePiece(selectedIndex, index);
-            return;
-        }
-
-        // Handle selection
-        if (piece && piece[0] === turn) {
-            setSelectedIndex(index === selectedIndex ? -1 : index);
-        } else {
-            setSelectedIndex(-1);
-        }
-    }, [getPieceAt, nextMoves, selectedIndex, turn, movePiece, drawState, isCheckmate, promotionPending]);
-
     const resetGame = useCallback(() => {
-        setBoard(INITIAL_BOARD);
-        setTurn('W');
-        setSelectedIndex(-1);
-        setHistory([]);
-        setCapturedPieces({ W: [], B: [] });
-        setBoardHistory([hashBoard(INITIAL_BOARD, 'W')]);
-        setHalfMoveClock(0);
-        setPromotionPending(null);
-    }, []);
+        const newGame = new ChessGame(initialFen);
+        updateLocalState(newGame);
+    }, [initialFen, updateLocalState]);
+
+    const isPieceAt = (index: number) => game.position.board[index] !== 0;
+    const getPieceAt = (index: number) => pieceToEngineString(game.position.board[index]);
+
+    const capturedPieces = useMemo(() => {
+        const white: string[] = [];
+        const black: string[] = [];
+        game.history.forEach(h => {
+            if (h.move.captured) {
+                const char = pieceToEngineString(h.move.captured);
+                if (h.move.captured & Color.BLACK) white.push(char); // Captured by white
+                else black.push(char); // Captured by black
+            }
+        });
+        return { W: white, B: black };
+    }, [game.history]);
 
     return {
         board,
         turn,
         selectedIndex,
         nextMoves,
-        history,
+        history: game.history.map(h => ({ san: h.san })),
         lastMove,
-        isCheck: inCheck,
+        isCheck,
         isCheckmate,
         isStalemate,
-        isDraw: !!drawState,
-        drawReason: drawState,
+        isDraw,
+        drawReason,
         capturedPieces,
         promotionPending,
         selectSquare,
@@ -367,3 +162,43 @@ export const useChess = (): UseChessReturn => {
         getPieceAt
     };
 };
+
+// Utilities
+function engineBoardToState(board: Uint8Array): BoardState {
+    const state: BoardState = [];
+    for (let r = 0; r < 8; r++) {
+        const row: string[] = [];
+        for (let c = 0; c < 8; c++) {
+            row.push(pieceToEngineString(board[r * 8 + c]));
+        }
+        state.push(row);
+    }
+    return state;
+}
+
+function pieceToEngineString(p: number): string {
+    if (p === 0) return "";
+    const color = (p & COLOR_MASK) === Color.WHITE ? 'W' : 'B';
+    let type = "";
+    switch (p & PIECE_MASK) {
+        case PieceType.PAWN: type = 'P'; break;
+        case PieceType.KNIGHT: type = 'N'; break;
+        case PieceType.BISHOP: type = 'B'; break;
+        case PieceType.ROOK: type = 'R'; break;
+        case PieceType.QUEEN: type = 'Q'; break;
+        case PieceType.KING: type = 'K'; break;
+    }
+    return color + type;
+}
+
+function charToPieceType(c: string): PieceType {
+    switch (c.toUpperCase()) {
+        case 'P': return PieceType.PAWN;
+        case 'N': return PieceType.KNIGHT;
+        case 'B': return PieceType.BISHOP;
+        case 'R': return PieceType.ROOK;
+        case 'Q': return PieceType.QUEEN;
+        case 'K': return PieceType.KING;
+        default: return PieceType.NONE;
+    }
+}
